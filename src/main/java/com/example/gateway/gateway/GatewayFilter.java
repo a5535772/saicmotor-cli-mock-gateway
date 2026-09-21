@@ -4,6 +4,8 @@ import com.example.gateway.auth.TokenService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +14,8 @@ import java.nio.charset.StandardCharsets;
 
 @Component
 public class GatewayFilter implements Filter {
+
+    private static final Logger log = LoggerFactory.getLogger(GatewayFilter.class);
 
     private final TokenService tokenService;
     private final ForwardClient forwardClient;
@@ -32,11 +36,13 @@ public class GatewayFilter implements Filter {
 
         String auth = req.getHeader("Authorization");
         if (auth == null || !auth.startsWith("Bearer ")) {
+            log.warn("{} {} — 缺少 Authorization header", req.getMethod(), req.getRequestURI());
             writeJson(res, 401, "{\"code\":401,\"msg\":\"未登录或 token 缺失\",\"data\":null}");
             return;
         }
         String userId = tokenService.parseUserId(auth.substring(7));
         if (userId == null) {
+            log.warn("{} {} — token 无效或已过期", req.getMethod(), req.getRequestURI());
             writeJson(res, 401, "{\"code\":401,\"msg\":\"未登录或会话已过期\",\"data\":null}");
             return;
         }
@@ -45,8 +51,10 @@ public class GatewayFilter implements Filter {
         String target = apiBackend + req.getRequestURI() + (query != null ? "?" + query : "");
         byte[] body = req.getInputStream().readAllBytes();
 
+        log.info("→ {} {}  [user={}]", req.getMethod(), req.getRequestURI(), userId);
         ForwardClient.ForwardResponse upstream = forwardClient.forward(
             req.getMethod(), target, req.getContentType(), body, userId);
+        log.info("← {} {}  [user={}]  status={}", req.getMethod(), req.getRequestURI(), userId, upstream.status());
 
         res.setStatus(upstream.status());
         if (upstream.contentType() != null) res.setContentType(upstream.contentType());
