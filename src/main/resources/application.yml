@@ -4,5 +4,14 @@ server:
 gateway:
   api-backend: http://localhost:8080
   users:
-    - { username: zhangsan, password: "123456", user-id: zhangsan }
-    - { username: lisi,     password: "123456", user-id: lisi }
+    - { username: zhangsan, password: "123456", user-id: zhangsan, email: "zhangsan@saicmotor.com" }
+    - { username: lisi,     password: "123456", user-id: lisi,     email: "lisi@saicmotor.com" }
+
+saicmotor:
+  idp:
+    provider: feishu
+    state-ttl-seconds: 300
+    feishu:
+      base-url: https://open.feishu.cn
+      app-id: ${FEISHU_APP_ID:}
+      app-secret: ${FEISHU_APP_SECRET:}
