@@ -55,9 +55,9 @@ public class ExchangeController {
             log.warn("code 换取失败", e);
             return error(4004, "SSO code 无效或 IdP 不可达: " + e.getMessage());
         }
-        UserDirectory.User user = userDirectory.findByEmail(idpUser.email());
+        UserDirectory.User user = userDirectory.findByUsername(idpUser.name());
         if (user == null) {
-            return error(4003, "未找到对应员工: " + idpUser.email());
+            return error(4003, "未找到对应员工: " + idpUser.name());
         }
         String token = tokenService.issue(user.getUsername(), user.getUserId());
         log.info("SSO 登录成功 — email={}, username={}", idpUser.email(), user.getUsername());

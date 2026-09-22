@@ -36,7 +36,7 @@ class ExchangeControllerTest {
     void exchangeSuccessIssuesToken() throws Exception {
         when(idpProvider.buildAuthorizeUrl(any(), any())).thenReturn("https://x");
         when(idpProvider.exchangeCode(eq("C1"), any()))
-            .thenReturn(new IdpUser("zhangsan@saicmotor.com", "张三"));
+            .thenReturn(new IdpUser("zhangsan@saicmotor.com", "章立"));
 
         String state = fetchState();
         mvc.perform(post("/auth/exchange")

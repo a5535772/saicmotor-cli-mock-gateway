@@ -5,6 +5,7 @@ gateway:
   api-backend: http://localhost:8080
   users:
     - { username: zhangsan, password: "123456", user-id: zhangsan, email: "zhangsan@saicmotor.com" }
+    - { username: 章立,     password: "123456", user-id: zhangli, email: "zhangsan@saicmotor.com" }
     - { username: lisi,     password: "123456", user-id: lisi,     email: "lisi@saicmotor.com" }
 
 saicmotor:

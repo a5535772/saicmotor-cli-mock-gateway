@@ -15,6 +15,8 @@ public class UserDirectory {
         private String password;
         private String userId;
         private String email;
+        private String unionId;
+        private String feishuName;
         public String getUsername() { return username; }
         public void setUsername(String username) { this.username = username; }
         public String getPassword() { return password; }
@@ -23,6 +25,10 @@ public class UserDirectory {
         public void setUserId(String userId) { this.userId = userId; }
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
+        public String getUnionId() { return unionId; }
+        public void setUnionId(String unionId) { this.unionId = unionId; }
+        public String getFeishuName() { return feishuName; }
+        public void setFeishuName(String feishuName) { this.feishuName = feishuName; }
     }
 
     public List<User> getUsers() { return users; }
@@ -36,5 +42,21 @@ public class UserDirectory {
     public User findByEmail(String email) {
         if (users == null || email == null) return null;
         return users.stream().filter(u -> email.equalsIgnoreCase(u.getEmail())).findFirst().orElse(null);
+    }
+
+    /** 按飞书 name（中文名）匹配用户名 */
+    public User findByFeishuName(String feishuName) {
+        if (users == null || feishuName == null) return null;
+        return users.stream()
+            .filter(u -> feishuName.equals(u.getFeishuName()))
+            .findFirst().orElse(null);
+    }
+
+    /** 按 union_id 匹配（飞书用户无 email 权限时的兜底） */
+    public User findByUnionId(String unionId) {
+        if (users == null || unionId == null) return null;
+        return users.stream()
+            .filter(u -> u.getUnionId() != null && u.getUnionId().equals(unionId))
+            .findFirst().orElse(null);
     }
 }

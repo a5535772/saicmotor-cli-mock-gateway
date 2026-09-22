@@ -1,6 +1,8 @@
 package com.example.gateway.auth;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import java.net.URLEncoder;
@@ -9,6 +11,8 @@ import java.util.Map;
 
 @Component
 public class FeishuIdpProvider implements IdpProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(FeishuIdpProvider.class);
 
     private final IdpProperties props;
     private final RestClient client;
@@ -42,7 +46,21 @@ public class FeishuIdpProvider implements IdpProvider {
             .retrieve().body(JsonNode.class);
         ensureFeishuCode(info);
         JsonNode data = info.path("data");
-        return new IdpUser(data.path("email").asText(null), data.path("name").asText(null));
+        log.debug("user_info response: {}", data);
+
+        String name = data.path("name").asText(null);
+        String email = firstNonEmpty(data, "email", "enterprise_email");
+
+        log.info("Feishu user: name={}, email={}", name, email);
+        return new IdpUser(email, name);
+    }
+
+    private static String firstNonEmpty(JsonNode node, String... fields) {
+        for (String f : fields) {
+            String v = node.path(f).asText(null);
+            if (v != null && !v.isEmpty()) return v;
+        }
+        return null;
     }
 
     private String fetchAppAccessToken() {
