@@ -1,5 +1,6 @@
 package com.example.gateway.auth;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -15,6 +16,7 @@ public class StateStore {
     private final SecureRandom random = new SecureRandom();
     private final long ttlSeconds;
 
+    @Autowired
     public StateStore(IdpProperties props) {
         this.ttlSeconds = props.getStateTtlSeconds();
     }
