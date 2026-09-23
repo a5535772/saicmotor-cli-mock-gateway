@@ -3,7 +3,7 @@
     <!-- Console appender: colored output for real-time observation -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%thread] %yellow([%X{requestId}]) %cyan(%logger{36}) - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -11,7 +11,7 @@
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/mock-gateway.log</file>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [%X{requestId}] %logger{36} - %msg%n</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>logs/mock-gateway.%d{yyyy-MM-dd}.%i.log</fileNamePattern>

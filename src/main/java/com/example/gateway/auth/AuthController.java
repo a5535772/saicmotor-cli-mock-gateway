@@ -1,5 +1,6 @@
 package com.example.gateway.auth;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -20,24 +21,36 @@ public class AuthController {
     }
 
     @PostMapping("/auth/login")
-    public Map<String, Object> login(@RequestBody Map<String, String> body) {
+    public Map<String, Object> login(@RequestBody Map<String, String> body, HttpServletRequest request) {
         String username = body.get("username");
-        String password = body.get("password");
+        String remote = request.getRemoteAddr();
+        log.info("账号密码登录尝试 — username={} from={}", username, remote);
+
         UserDirectory.User user = userDirectory.findByUsername(username);
-        if (user == null || !user.getPassword().equals(password)) {
-            log.warn("登录失败 — username={}", username);
-            Map<String, Object> resp = new LinkedHashMap<>();
-            resp.put("code", 4001);
-            resp.put("msg", "账号或密码错误");
-            resp.put("data", null);
-            return resp;
+        if (user == null) {
+            log.warn("登录失败 — username={} from={} 原因=用户不存在", username, remote);
+            return error(4001, "账号或密码错误");
+        }
+        if (!user.getPassword().equals(body.get("password"))) {
+            log.warn("登录失败 — username={} userId={} from={} 原因=密码错误",
+                    username, user.getUserId(), remote);
+            return error(4001, "账号或密码错误");
         }
         String token = tokenService.issue(username, user.getUserId());
-        log.info("登录成功 — username={}, userId={}", username, user.getUserId());
+        log.info("登录成功 — username={} userId={} from={} token={}…",
+                username, user.getUserId(), remote, TokenService.fingerprint(token));
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("code", 0);
         resp.put("msg", "ok");
         resp.put("data", Map.of("token", token));
+        return resp;
+    }
+
+    private Map<String, Object> error(int code, String msg) {
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("code", code);
+        resp.put("msg", msg);
+        resp.put("data", null);
         return resp;
     }
 }

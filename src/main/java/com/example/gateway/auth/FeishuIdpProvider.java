@@ -31,27 +31,34 @@ public class FeishuIdpProvider implements IdpProvider {
 
     @Override
     public IdpUser exchangeCode(String code, String redirectUri) {
+        log.info("调用飞书换取用户身份 — redirectUri={}", redirectUri);
         String appToken = fetchAppAccessToken();
+
+        long t1 = System.currentTimeMillis();
         JsonNode tokenResp = client.post()
             .uri("/open-apis/authen/v1/oidc/access_token")
             .header("Authorization", "Bearer " + appToken)
             .body(Map.of("grant_type", "authorization_code", "code", code))
             .retrieve().body(JsonNode.class);
-        ensureFeishuCode(tokenResp);
+        ensureFeishuCode(tokenResp, "oidc/access_token");
         String userAccessToken = tokenResp.path("data").path("access_token").asText();
+        log.info("飞书 oidc/access_token 成功 — duration={}ms", System.currentTimeMillis() - t1);
 
+        long t2 = System.currentTimeMillis();
         JsonNode info = client.get()
             .uri("/open-apis/authen/v1/user_info")
             .header("Authorization", "Bearer " + userAccessToken)
             .retrieve().body(JsonNode.class);
-        ensureFeishuCode(info);
+        ensureFeishuCode(info, "user_info");
         JsonNode data = info.path("data");
+        log.info("飞书 user_info 成功 — duration={}ms name={} email={}",
+                System.currentTimeMillis() - t2,
+                data.path("name").asText(null),
+                firstNonEmpty(data, "email", "enterprise_email"));
         log.debug("user_info response: {}", data);
 
         String name = data.path("name").asText(null);
         String email = firstNonEmpty(data, "email", "enterprise_email");
-
-        log.info("Feishu user: name={}, email={}", name, email);
         return new IdpUser(email, name);
     }
 
@@ -64,19 +71,24 @@ public class FeishuIdpProvider implements IdpProvider {
     }
 
     private String fetchAppAccessToken() {
+        long start = System.currentTimeMillis();
         JsonNode resp = client.post()
             .uri("/open-apis/auth/v3/app_access_token/internal")
             .body(Map.of("app_id", props.getFeishu().getAppId(),
                          "app_secret", props.getFeishu().getAppSecret()))
             .retrieve().body(JsonNode.class);
-        ensureFeishuCode(resp);
+        ensureFeishuCode(resp, "app_access_token");
+        log.info("飞书 app_access_token 获取成功 — duration={}ms appId={}",
+                System.currentTimeMillis() - start, props.getFeishu().getAppId());
         return resp.path("app_access_token").asText();
     }
 
-    private void ensureFeishuCode(JsonNode node) {
+    private void ensureFeishuCode(JsonNode node, String api) {
         if (node == null || node.path("code").asInt(-1) != 0) {
+            int feishuCode = node == null ? -1 : node.path("code").asInt(-1);
             String msg = node == null ? "无响应" : node.path("msg").asText("飞书返回错误");
-            throw new RuntimeException("飞书接口错误: " + msg);
+            log.warn("飞书接口返回错误 — api={} code={} msg={}", api, feishuCode, msg);
+            throw new RuntimeException("飞书接口错误(" + api + " code=" + feishuCode + "): " + msg);
         }
     }
 
