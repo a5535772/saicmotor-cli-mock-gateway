@@ -14,5 +14,6 @@ saicmotor:
     state-ttl-seconds: 300
     feishu:
       base-url: https://open.feishu.cn
-      app-id: ${FEISHU_APP_ID:}
-      app-secret: ${FEISHU_APP_SECRET:}
+      # POC 阶段：内置默认凭证便于本地一键启动；生产前必须移除，改由环境变量/密钥管理注入
+      app-id: ${FEISHU_APP_ID:cli_aa38809d24f85d01}
+      app-secret: ${FEISHU_APP_SECRET:hi5dQ5T51Ifx9RH0w3JZLqaUKd8V6oRt}
